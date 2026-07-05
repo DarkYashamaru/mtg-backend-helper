@@ -5,3 +5,5 @@ requests
 SQLAlchemy
 pydantic
 ijson
+curl_cffi
+beautifulsoup4
