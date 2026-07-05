@@ -1,3 +1,13 @@
+TWO_FACE_LAYOUTS = {
+    "adventure",
+    "transform",
+    "prepare",
+    "split",
+    "flip",
+    "modal_dfc"
+}
+
+
 def format_card(card_json):
     if not card_json:
         return "Card not found.\n\n"
@@ -9,7 +19,7 @@ def format_card(card_json):
     parts.append(name)
     parts.append(f"Layout:{layout}")
 
-    if layout == "adventure" or layout == "transform" or layout == "prepare" or layout == "split" or layout == "flip":
+    if layout in TWO_FACE_LAYOUTS:
         faces = card_json["card_faces"]
 
         #parts.append("\n")

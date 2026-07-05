@@ -1,1 +1,7 @@
- 
+fastapi[standard]
+fastapi
+Uvicorn
+requests
+SQLAlchemy
+pydantic
+ijson
