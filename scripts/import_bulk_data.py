@@ -1,4 +1,5 @@
 from pathlib import Path
+import gzip
 import json
 import sqlite3
 import re
@@ -7,10 +8,10 @@ from datetime import datetime, timezone
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 DB_PATH = BASE_DIR / "card_cache.sqlite3"
-JSON_PATH = BASE_DIR / "cards.json"
+JSON_PATH = BASE_DIR / "cards.jsonl.gz"
 
 DB_PATH = BASE_DIR / "card_cache.sqlite3"
-JSON_PATH = BASE_DIR / "cards.json"
+JSON_PATH = BASE_DIR / "cards.jsonl.gz"
 
 
 def normalize_name(name):
@@ -40,19 +41,25 @@ def main():
 
     init_db(conn)
 
-    print("Loading JSON file...")
-
-    with open(JSON_PATH, "r", encoding="utf-8") as f:
-        cards = json.load(f)
-
-    print(f"Loaded {len(cards)} cards")
+    print("Streaming JSONL gzip archive...")
 
     now = datetime.now(timezone.utc).isoformat()
 
     inserted = 0
     skipped = 0
 
-    for card in cards:
+    for line in gzip.open(JSON_PATH, "rt", encoding="utf-8"):
+        line = line.strip()
+        if not line:
+            skipped += 1
+            continue
+
+        try:
+            card = json.loads(line)
+        except json.JSONDecodeError:
+            skipped += 1
+            continue
+
         name = card.get("name")
 
         if not name:

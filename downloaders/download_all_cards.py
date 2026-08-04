@@ -9,7 +9,7 @@ from downloaders.scryfall_bulk_data_downloader import (  # noqa: E402
 )
 
 ALL__CARDS_TYPE = "all_cards"
-ALL_CARDS_PATH = SCRYFALL_DATA_DIR / "all_cards.json"
+ALL_CARDS_PATH = SCRYFALL_DATA_DIR / "all_cards.jsonl.gz"
 ALL_CARDS_METADATA_PATH = SCRYFALL_DATA_DIR / "all_cards.meta.json"
 
 def create_all_cards_downloader(session: HttpSession | None = None,) -> ScryfallBulkDataDownloader:

@@ -4,9 +4,9 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Protocol
+
 from downloaders.scryfall_download_utility import REQUEST_HEADERS, BULK_DATA_URL
 from tools.logger import logger
-
 import requests
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
@@ -26,9 +26,7 @@ class BulkDataFile:
     type: str
     updated_at: str
     download_uri: str
-    size: int | None = None
-    content_type: str | None = None
-    content_encoding: str | None = None
+    compressed_size: int | None = None
 
 
 @dataclass(frozen=True)
@@ -95,10 +93,8 @@ class ScryfallBulkDataDownloader:
             return BulkDataFile(
                 type=item["type"],
                 updated_at=item["updated_at"],
-                download_uri=item["download_uri"],
-                size=item.get("size"),
-                content_type=item.get("content_type"),
-                content_encoding=item.get("content_encoding"),
+                download_uri=item["jsonl_download_uri"],
+                compressed_size=item.get("compressed_size"),
             )
         except KeyError as error:
             raise ValueError(
@@ -148,9 +144,7 @@ class ScryfallBulkDataDownloader:
                     "type": bulk_data.type,
                     "updated_at": bulk_data.updated_at,
                     "download_uri": bulk_data.download_uri,
-                    "size": bulk_data.size,
-                    "content_type": bulk_data.content_type,
-                    "content_encoding": bulk_data.content_encoding,
+                    "compressed_size": bulk_data.compressed_size,
                 },
                 indent=2,
                 sort_keys=True,

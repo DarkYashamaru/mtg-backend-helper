@@ -1,10 +1,11 @@
 from __future__ import annotations
 
+import gzip
 import json
 from pathlib import Path
 from typing import Any
+
 from sqlalchemy import select
-import ijson  # Added for memory-efficient JSON streaming
 
 from database.session import session_scope 
 from models.card import CardPrint, CardPrintFace, CardPrintImage, ImageType
@@ -96,12 +97,12 @@ def stream_card_relationships(data: dict[str, Any], jsonl_file) -> None:
 
 def import_card_prints(source_path: Path = ALL_CARDS_PATH) -> int:
     """
-    Streams a Scryfall bulk JSON file and inserts eligible new card printings
+    Streams a Scryfall bulk JSONL gzip archive and inserts eligible new card printings
     into the database. Lazily opens the relationship JSONL file ONLY when 
     there are actual new printings to process, preventing accidental 0-byte truncation.
     """
     if not source_path.exists():
-        raise FileNotFoundError(f"Scryfall bulk cards JSON not found at {source_path}.")
+        raise FileNotFoundError(f"Scryfall bulk cards archive not found at {source_path}.")
 
     # Ensure the target directory for relationships exists
     RELATIONSHIPS_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -122,10 +123,18 @@ def import_card_prints(source_path: Path = ALL_CARDS_PATH) -> int:
     
     try:
         with session_scope() as session:
-            with source_path.open(encoding="utf-8") as file:
-                payload_stream = ijson.items(file, "item")
-                
-                for item in payload_stream:
+            with gzip.open(source_path, "rt", encoding="utf-8") as file:
+                for line in file:
+                    line = line.strip()
+                    if not line:
+                        continue
+
+                    try:
+                        item = json.loads(line)
+                    except json.JSONDecodeError as error:
+                        logger.error(f"Failed to decode Scryfall JSONL record: {error}")
+                        continue
+
                     print_id = item.get("id")
                     if not print_id or print_id in existing_ids:
                         continue
