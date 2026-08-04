@@ -252,3 +252,4 @@ cards.json
 card_cache.sqlite3
 card_cache.sqlite3-wal
 card_cache.sqlite3-shm
+/data/relationships/card_relationships.jsonl

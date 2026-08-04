@@ -1,8 +1,9 @@
-from enum import Enum
+from __future__ import annotations
+
 from datetime import datetime
 from typing import List, Optional
 from sqlalchemy import String, Integer, Boolean, DateTime, func
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from database.base import Base
 
 
@@ -14,8 +15,9 @@ class User(Base):
     # Unique constraint prevents duplicate registrations
     username: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
     
-    # Note: Always store securely hashed strings here, never plain text!
-    password: Mapped[str] = mapped_column(String, nullable=False)
+    # Column stays named "password" for current database compatibility.
+    # Code should always use password_hash and never store plain text here.
+    password_hash: Mapped[str] = mapped_column("password", String, nullable=False)
     
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     is_admin: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
