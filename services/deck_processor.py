@@ -1,19 +1,10 @@
 import re
 
-from services.cache import (
-    get_connection,
-    init_db,
-    get_cached_card,
-    save_card,
-    normalize_name
-)
-
-from services.scryfall import fetch_card
-
 from services.formatter import (
     format_card,
     build_output
 )
+from services.mtg_database import get_cards_bulk
 
 SECTION_HEADERS = {
     "commander",
@@ -67,6 +58,10 @@ def parse_line(line):
     return 1, line
 
 
+def normalize_name(name):
+    return re.sub(r"\s+", " ", name).strip().casefold()
+
+
 def process_deck(deck_text):
 
     lines = []
@@ -77,8 +72,6 @@ def process_deck(deck_text):
         if line.strip():
 
             lines.append(line.strip())
-
-    cleaned_lines = []
 
     unique_cards = {}
     seen_cards = set()
@@ -96,52 +89,29 @@ def process_deck(deck_text):
         if not name:
             continue
 
-        cleaned_line = f"{count} {name}"
-
-        cleaned_lines.append(cleaned_line)
-
         normalized = normalize_name(name)
 
         deck_format.append("card_detail")
 
         if normalized not in seen_cards:
             seen_cards.add(normalized)
-            unique_cards[name] = None
+            unique_cards[normalized] = name
 
     formatted_cards = []
+    lookup_names = list(unique_cards.values())
+    lookup_decklist = "\n".join(f"1 {name}" for name in lookup_names)
+    cards = get_cards_bulk(lookup_decklist)
+    cards_by_name = {
+        normalize_name(card["name"]): card
+        for card in cards
+    }
 
-    conn = get_connection()
-
-    try:
-        init_db(conn)
-
-        for name in unique_cards:
-            cached_card, was_cached = get_cached_card(conn, name)
-
-            if was_cached:
-                print(f"Cache hit: {name}")
-
-                formatted_cards.append(
-                    format_card(cached_card)
-                )
-
-                continue
-
-            print(f"Fetching: {name}")
-
-            card_json = fetch_card(name)
-
-            save_card(conn, name, card_json)
-
-            formatted_cards.append(
-                format_card(card_json)
-            )
-
-    finally:
-        conn.close()
+    for normalized_name in unique_cards:
+        formatted_cards.append(
+            format_card(cards_by_name.get(normalized_name))
+        )
 
     return build_output(
         deck_format,
-        cleaned_lines,
         formatted_cards
     )

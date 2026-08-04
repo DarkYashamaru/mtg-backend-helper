@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 import uvicorn
 from fastapi import FastAPI
 
-from app.routes import cards, decks, health, scrapers, search, users
+from app.routes import cards, collections, decks, health, scrapers, search, users
 from database.create_database import create_database
 from tools.logger import logger
 
@@ -48,6 +48,7 @@ app = FastAPI(
 
 app.include_router(health.router)
 app.include_router(users.router)
+app.include_router(collections.router)
 app.include_router(cards.router)
 app.include_router(decks.router)
 app.include_router(search.router)
