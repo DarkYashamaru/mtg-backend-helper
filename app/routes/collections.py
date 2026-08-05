@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from database.session import get_db
+from models.collection import DeckType
 from models.users import User
 from services.auth import get_current_user
 from services.collections import (
@@ -30,11 +31,13 @@ router = APIRouter(prefix="/api/collections", tags=["collections"])
 class CollectionCreatePayload(BaseModel):
     name: Optional[str] = None
     deck_text: str
+    deck_type: Optional[DeckType] = None
 
 
 class CollectionUpdatePayload(BaseModel):
     name: Optional[str] = None
     deck_text: Optional[str] = None
+    deck_type: Optional[DeckType] = None
 
 
 @router.get("")
@@ -77,7 +80,13 @@ def create_user_collection(
     current_user: User = Depends(get_current_user),
 ):
     try:
-        collection = create_collection_from_deck_text(db, current_user, payload.name, payload.deck_text)
+        collection = create_collection_from_deck_text(
+            db,
+            current_user,
+            payload.name,
+            payload.deck_text,
+            deck_type=payload.deck_type,
+        )
         return {"success": True, "collection": serialize_collection(collection)}
     except (CollectionParseError, CollectionCardLookupError) as exc:
         return JSONResponse(status_code=400, content={"success": False, "error": str(exc)})
@@ -97,6 +106,7 @@ def update_user_collection(
             collection_id,
             name=payload.name,
             deck_text=payload.deck_text,
+            deck_type=payload.deck_type,
         )
         return {"success": True, "collection": serialize_collection(collection)}
     except CollectionNotFoundError as exc:

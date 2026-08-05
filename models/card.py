@@ -1,6 +1,6 @@
 from enum import Enum
 from typing import List, Optional
-from sqlalchemy import String, Integer, Float, Boolean, ForeignKey, Enum as SQLEnum
+from sqlalchemy import String, Integer, Float, Boolean, ForeignKey, Enum as SQLEnum, Index
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from database.base import Base
 
@@ -16,10 +16,24 @@ class ImageType(str, Enum):
 # 1. Main Card Table
 class CardPrint(Base):
     __tablename__ = "cards"
+    __table_args__ = (
+        Index(
+            "ix_cards_lookup_exact",
+            "name_normalized",
+            "set_code_normalized",
+            "collector_number_normalized",
+        ),
+        Index(
+            "ix_cards_lookup_fallback",
+            "name_normalized",
+            "set_code_normalized",
+        ),
+    )
 
     id: Mapped[str] = mapped_column(String, primary_key=True, index=True)
     oracle_id: Mapped[str] = mapped_column(String, index=True)
     name: Mapped[str] = mapped_column(String, index=True)
+    name_normalized: Mapped[Optional[str]] = mapped_column(String, index=True, nullable=True)
     lang: Mapped[str] = mapped_column(String, index=True)
     released_at: Mapped[str] = mapped_column(String)
     scryfall_uri: Mapped[str] = mapped_column(String)
@@ -28,8 +42,10 @@ class CardPrint(Base):
     # Extra flat fields from JSON
     rarity: Mapped[str] = mapped_column(String)
     set_code: Mapped[str] = mapped_column(String, index=True)
+    set_code_normalized: Mapped[Optional[str]] = mapped_column(String, index=True, nullable=True)
     set_name: Mapped[str] = mapped_column(String)
     collector_number: Mapped[str] = mapped_column(String)
+    collector_number_normalized: Mapped[Optional[str]] = mapped_column(String, index=True, nullable=True)
     
     # Storing prices flat on the card row since the keys are fixed and predictable
     price_usd: Mapped[Optional[str]] = mapped_column(String, nullable=True)

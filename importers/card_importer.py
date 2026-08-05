@@ -9,6 +9,11 @@ from sqlalchemy import select
 
 from database.session import session_scope 
 from models.card import CardPrint, CardPrintFace, CardPrintImage, ImageType
+from tools.card_lookup import (
+    normalize_card_name,
+    normalize_collector_number,
+    normalize_set_code,
+)
 from tools.logger import logger
 from downloaders.download_all_cards import ALL_CARDS_PATH
 
@@ -27,14 +32,17 @@ def map_json_to_card_model(data: dict[str, Any]) -> CardPrint:
         id=data["id"],
         oracle_id=oracle_id,
         name=data["name"],
+        name_normalized=normalize_card_name(data["name"]),
         lang=data["lang"],
         released_at=data["released_at"],
         scryfall_uri=data["scryfall_uri"],
         layout=data["layout"],
         rarity=data.get("rarity", "common"),
         set_code=data.get("set", ""),
+        set_code_normalized=normalize_set_code(data.get("set", "")),
         set_name=data.get("set_name", ""),
         collector_number=data.get("collector_number", ""),
+        collector_number_normalized=normalize_collector_number(data.get("collector_number", "")),
         price_usd=data.get("prices", {}).get("usd"),
         price_usd_foil=data.get("prices", {}).get("usd_foil"),
         price_eur=data.get("prices", {}).get("eur")
